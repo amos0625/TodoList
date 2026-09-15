@@ -1,0 +1,14 @@
+import { spawn, spawnSync } from 'node:child_process';
+import { mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join, resolve } from 'node:path';
+const directory = mkdtempSync(join(tmpdir(), 'todo-e2e-'));
+const env = { ...process.env, ConnectionStrings__TodoDb: `Data Source=${join(directory, 'test.db')};Pooling=False`, ASPNETCORE_URLS: 'http://127.0.0.1:5051', ASPNETCORE_ENVIRONMENT: 'Testing' };
+const project = resolve('../api/Todo.Api.csproj');
+const dotnet = process.env.DOTNET_EXE || 'dotnet';
+const migration = spawnSync(dotnet, ['run', '--project', project, '--no-build', '--', '--migrate'], { env, stdio: 'inherit' });
+if (migration.status !== 0) process.exit(migration.status || 1);
+const server = spawn(dotnet, ['run', '--project', project, '--no-build'], { env, stdio: 'inherit' });
+const stop = () => server.kill();
+process.on('SIGTERM', stop); process.on('SIGINT', stop);
+server.on('exit', code => { try { rmSync(directory, { recursive: true, force: true }); } catch { /* OS may still hold a test file briefly. */ } process.exit(code || 0); });

@@ -1,0 +1,15 @@
+.tools/
+**/bin/
+**/obj/
+**/node_modules/
+**/dist/
+**/wwwroot/
+**/data/
+*.db
+*.db-shm
+*.db-wal
+.env
+test-results/
+playwright-report/
+artifacts/
+*.tsbuildinfo
